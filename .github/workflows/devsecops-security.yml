@@ -1,0 +1,49 @@
+name: DevSecOps Security Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  security-validation:
+    name: Terraform and Security Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install Checkov
+        run: |
+          python -m pip install -r requirements-dev.txt
+          checkov --version
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: '1.17.0'
+
+      - name: Check Terraform formatting
+        run: terraform fmt -check -recursive terraform/secure
+
+      - name: Initialize Terraform
+        run: terraform -chdir=terraform/secure init -backend=false -input=false -lockfile=readonly
+
+      - name: Validate Terraform
+        run: terraform -chdir=terraform/secure validate -no-color
+
+      - name: Test SSH security policy
+        run: bash scripts/test_ssh_policy.sh
+
+      - name: Test S3 security policies
+        run: bash scripts/test_s3_policy.sh
