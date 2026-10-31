@@ -47,3 +47,19 @@ jobs:
 
       - name: Test S3 security policies
         run: bash scripts/test_s3_policy.sh
+
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@v0.3.1
+        with:
+          version: v0.76.1
+
+      - name: Generate Trivy security reports
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          trivy --version
+          trivy config --format json --output reports/trivy-insecure.json --exit-code 0 terraform/insecure
+          trivy config --format json --output reports/trivy-secure.json --exit-code 0 terraform/secure
+
+      - name: Verify Trivy security policies
+        run: python3 scripts/verify_trivy_reports.py
