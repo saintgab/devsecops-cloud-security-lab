@@ -1,77 +1,146 @@
 # DevSecOps & Cloud Security Automation Lab
 
-A hands-on Infrastructure as Code (IaC) security project
-demonstrating automated detection, remediation, and
-regression testing of AWS cloud misconfigurations.
+[![DevSecOps Security Pipeline](https://github.com/saintgab/devsecops-cloud-security-lab/actions/workflows/devsecops-security.yml/badge.svg)](https://github.com/saintgab/devsecops-cloud-security-lab/actions)
+
+## Overview
+
+A hands-on DevSecOps engineering project demonstrating how to
+identify, remediate, and prevent insecure AWS infrastructure
+changes through automated security testing.
+
+The project integrates Terraform, Checkov, Trivy, Python,
+Bash, and GitHub Actions into a continuous security
+validation pipeline.
+
+## Key Achievements
+
+- Built an automated Infrastructure as Code security pipeline.
+- Developed positive and negative security regression tests.
+- Detected unrestricted SSH access and unsafe S3 configurations.
+- Implemented S3 versioning and lifecycle controls.
+- Reduced Trivy findings from 8 to 2 in the lab examples.
+- Validated security scanning on GitHub Actions.
+- Demonstrated a failed pull request caused by insecure Terraform.
+- Enforced required security checks through GitHub branch rules.
+- Remediated the vulnerability and verified the pipeline turned green.
+
+No AWS infrastructure was deployed.
 
 ## Technology Stack
-- Terraform
-- AWS infrastructure definitions
-- Checkov
-- Python 3.12
-- Bash
-- GitHub Actions
 
-## Security Scenarios
+| Technology | Purpose |
+|---|---|
+| Terraform | AWS Infrastructure as Code |
+| Checkov | Terraform security policy scanning |
+| Trivy | Independent misconfiguration scanning |
+| Python | Security regression verification |
+| Bash | Automated security test execution |
+| GitHub Actions | CI/CD security automation |
+| GitHub Rulesets | Required checks before merging |
 
-### 1. Unrestricted SSH Access
-- Policy: CKV_AWS_24
-- Insecure: SSH port 22 accessible from 0.0.0.0/0
-- Remediation: Remove unnecessary inbound SSH access
-- Validation: Automated positive and negative tests
+## Security Controls
 
-### 2. S3 Public Access Protections
-- Policies: CKV_AWS_53, CKV_AWS_54,
-  CKV_AWS_55, CKV_AWS_56
-- Insecure: Four public-access-block settings disabled
-- Remediation: Enable all four protections
-- Validation: Automated positive and negative tests
+### SSH Exposure
 
-## Local Security Tests
+Insecure configuration:
+- TCP port 22 open to 0.0.0.0/0.
 
-Activate the Python environment and install dependencies:
+Remediation:
+- Removed unrestricted inbound SSH access.
+
+Detection:
+- Checkov CKV_AWS_24
+- Trivy AWS-0107
+
+### S3 Public Access
+
+Insecure configuration:
+- All four S3 public-access-block settings disabled.
+
+Remediation:
+- Enabled the four S3 public-access-block protections.
+
+Detection:
+- Checkov CKV_AWS_53 through CKV_AWS_56
+- Corresponding Trivy S3 misconfiguration checks
+
+### S3 Data Protection
+
+Additional controls:
+- S3 bucket versioning enabled.
+- Lifecycle expiration for noncurrent object versions.
+- Terraform and security policy validation.
+
+## CI/CD Security Pipeline
+
+The GitHub Actions workflow performs:
+
+1. Repository checkout and dependency setup.
+2. Terraform formatting and configuration validation.
+3. Checkov SSH security regression tests.
+4. Checkov S3 public-access regression tests.
+5. Trivy scanning of insecure and secure configurations.
+6. Python verification of expected security findings.
+
+A GitHub branch ruleset requires the security validation
+check to pass before changes can be merged into main.
+
+## Security Gate Demonstration
+
+A controlled pull request introduced unrestricted SSH access
+into a Terraform security group.
+
+Observed results:
+- Terraform validation passed.
+- Checkov detected the insecure SSH rule.
+- GitHub Actions reported a failed required check.
+- GitHub prevented merging through the configured ruleset.
+
+After removing the vulnerable rule, the pipeline passed.
+The demonstration pull request was closed without merging.
+
+## Test Locally
+
+Create an isolated Python environment and install Checkov:
 
     python3 -m venv .venv
     source .venv/bin/activate
     python -m pip install -r requirements-dev.txt
 
-Run the regression tests:
+Run the Checkov regression tests:
 
     bash scripts/test_ssh_policy.sh
     bash scripts/test_s3_policy.sh
 
-## Terraform Validation
+Generate Trivy reports with an installed Trivy CLI:
 
-The secure configuration uses the HashiCorp AWS provider.
+    mkdir -p reports
+    trivy config --format json --output reports/trivy-insecure.json --exit-code 0 terraform/insecure
+    trivy config --format json --output reports/trivy-secure.json --exit-code 0 terraform/secure
+    python3 scripts/verify_trivy_reports.py
 
-    terraform -chdir=terraform/secure init -backend=false
-    terraform -chdir=terraform/secure validate
+## Architecture and Evidence
 
-## CI/CD Pipeline
-
-The GitHub Actions workflow is configured to perform:
-- Terraform formatting checks
-- Terraform configuration validation
-- Automated SSH security regression testing
-- Automated S3 security regression testing
-
-GitHub-hosted execution is pending verification.
+- [Security Architecture](docs/architecture.md)
+- [Security Validation Evidence](docs/security-evidence.md)
+- [GitHub Actions Runs](https://github.com/saintgab/devsecops-cloud-security-lab/actions)
 
 ## Known Limitations
 
-The secure standalone security group still triggers
-CKV2_AWS_5 because it is not attached to another resource.
+The remediated example still has outstanding findings
+including S3 access logging and customer-managed KMS
+encryption recommendations.
 
-The automated tests cover five selected Checkov policies,
-not a complete infrastructure security assessment.
+Additional full-scan Checkov findings require assessment.
+The standalone security group is not attached to a workload.
 
-The insecure configurations are demonstration fixtures.
-No AWS resources are deployed by this project.
+The regression tests cover selected controls and do not
+constitute a complete infrastructure security assessment.
 
-## Future Enhancements
+All deliberately insecure configurations are code-only
+test fixtures. They must not be deployed.
 
-- Trivy integration
-- Additional AWS security controls
-- Stronger CI policy enforcement
-- GitHub branch protection
-- Security evidence and reporting
+## Author
+
+Cybersecurity engineering portfolio:
+https://github.com/saintgab
