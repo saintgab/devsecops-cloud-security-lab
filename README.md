@@ -125,6 +125,23 @@ Generate Trivy reports with an installed Trivy CLI:
 - [Security Validation Evidence](docs/security-evidence.md)
 - [GitHub Actions Runs](https://github.com/saintgab/devsecops-cloud-security-lab/actions)
 
+## CI/CD Security Validation Evidence
+
+### 1. Insecure Terraform rejected by Checkov
+
+An intentionally insecure SSH rule triggered Checkov
+policy `CKV_AWS_24`, causing GitHub Actions to fail.
+The required status check also blocked merging.
+
+![Checkov security gate failure](screenshots/ci-security-gate-blocked.png)
+
+### 2. Successful DevSecOps security pipeline
+
+After remediation, the security validation workflow
+passed on the protected `main` branch.
+
+![Successful DevSecOps security pipeline](screenshots/ci-security-pipeline-passed.png)
+
 ## Known Limitations
 
 The remediated example still has outstanding findings
